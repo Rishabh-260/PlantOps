@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: plantops
+      POSTGRES_USER: plantops
+      POSTGRES_PASSWORD: plantops
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plantops -d plantops"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - plantops-data:/var/lib/postgresql/data
+  api:
+    build: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/plantops
+      SPRING_DATASOURCE_USERNAME: plantops
+      SPRING_DATASOURCE_PASSWORD: plantops
+      JWT_SECRET: plantops-local-demo-secret-key-change-before-deployment-2026
+      CORS_ORIGINS: http://localhost:5173
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+  web:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "5173:8080"
+volumes:
+  plantops-data:
